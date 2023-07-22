@@ -77,8 +77,6 @@ core_fraction=5, "Уровни производительности vCPU", ми�
 
 ### Ответ
 
-#### variables.tf
-
 <details>
   <summary>variables.tf</summary>
 
@@ -127,14 +125,17 @@ variable vm_web_serial_port_enable {
   type        = number
   default     = 1
 }
+
+variable vm_web_ssh {
+  type        = string
+  default     = "ubuntu:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAJkjyC8jM6WyALVI5h/cBOLtxO/OsxSU6Matw+HHefF"
+}
 ```
 
 </details>
 
-#### main.tf (yandex_compute_instance, yandex_compute_image)
-
 <details>
-  <summary>main.tf</summary>
+  <summary>main.tf (yandex_compute_instance, yandex_compute_image)</summary>
 
 ```JSON
 data "yandex_compute_image" "ubuntu" {
@@ -163,7 +164,7 @@ resource "yandex_compute_instance" "platform" {
 
   metadata = {
     serial-port-enable = var.vm_web_serial_port_enable
-    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+    ssh-keys           = var.variable vm_web_ssh
   }
 
 }
@@ -198,8 +199,6 @@ Terraform has compared your real infrastructure against your configuration and f
 </details>
 
 ### Ответ
-
-#### vms_platform.tf
 
 <details>
   <summary>vms_platform.tf</summary>
@@ -250,6 +249,11 @@ variable vm_web_serial_port_enable {
   default     = 1
 }
 
+variable vm_web_ssh {
+  type        = string
+  default     = "ubuntu:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAJkjyC8jM6WyALVI5h/cBOLtxO/OsxSU6Matw+HHefF"
+}
+
 ### vars for platform-db yandex_compute_instance, yandex_compute_image
 
 variable vm_db_family {
@@ -294,11 +298,14 @@ variable vm_db_serial_port_enable {
   type        = number
   default     = 1
 }
+
+variable vm_db_ssh {
+  type        = string
+  default     = "ubuntu:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAJkjyC8jM6WyALVI5h/cBOLtxO/OsxSU6Matw+HHefF"
+}
   ```
 
 </details>
-
-#### main.tf
 
 <details>
   <summary>main.tf</summary>
@@ -341,7 +348,7 @@ resource "yandex_compute_instance" "platform" {
 
   metadata = {
     serial-port-enable = var.vm_web_serial_port_enable
-    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+    ssh-keys           = var.vm_web_ssh
   }
 
 }
@@ -369,7 +376,7 @@ resource "yandex_compute_instance" "platform_db" {
 
   metadata = {
     serial-port-enable = var.vm_db_serial_port_enable
-    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+    ssh-keys           = var.vm_db_ssh
   }
 
 }
@@ -402,8 +409,6 @@ Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 </details>
 
 ### Ответ
-
-#### outputs.tf
 
 <details>
   <summary>outputs.tf</summary>
@@ -441,7 +446,7 @@ ext_ip = {
 
 </details>
 
-#### locals.tf
+### Ответ
 
 <details>
   <summary>locals.tf</summary>
@@ -455,8 +460,6 @@ locals {
 ```
 
 </details>
-
-#### main.tf
 
 <details>
   <summary>main.tf</summary>
@@ -485,7 +488,7 @@ resource "yandex_compute_instance" "platform" {
 
   metadata = {
     serial-port-enable = var.vm_web_serial_port_enable
-    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+    ssh-keys           = var.vm_web_ssh
   }
 
 }
@@ -513,10 +516,145 @@ resource "yandex_compute_instance" "platform_db" {
 
   metadata = {
     serial-port-enable = var.vm_db_serial_port_enable
-    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+    ssh-keys           = var.vm_db_ssh
   }
 
 }
 ```
 
 </details>
+
+## Задание 6
+
+<details>
+  <summary>Описание задачи</summary>
+
+1. Вместо использования 3-х переменных  ".._cores",".._memory",".._core_fraction" в блоке  resources {...}, объедените их в переменные типа **map** с именами "vm_web_resources" и "vm_db_resources". В качестве продвинутой практики попробуйте создать одну map переменную **vms_resources** и уже внутри нее конфиги обеих ВМ(вложенный map).
+2. Так же поступите с блоком **metadata {serial-port-enable, ssh-keys}**, эта переменная должна быть общая для всех ваших ВМ.
+3. Найдите и удалите все более не используемые переменные проекта.
+4. Проверьте terraform plan (изменений быть не должно).
+
+</details>
+
+### Ответ
+
+<details>
+  <summary>vms_platform.tf</summary>
+
+```JSON
+#### общие ресурсная мапа
+
+variable vms_metadata {
+  type = map
+  default = {
+    serial-port-enable = 1
+    ssh = "ubuntu:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAJkjyC8jM6WyALVI5h/cBOLtxO/OsxSU6Matw+HHefF"
+  }
+}
+
+variable vms_resources {
+  type = map
+  default = {
+        vm_db_resources = {
+            cores = 2
+            memory = 2
+            core_fraction = 20
+        }
+        vm_web_resources = {
+            cores = 2
+            memory = 2
+            core_fraction = 5
+        }
+    }
+}
+```
+</details>
+
+<details>
+  <summary>main.tf</summary>
+
+```json
+resource "yandex_vpc_network" "develop" {
+  name = var.vpc_name
+}
+resource "yandex_vpc_subnet" "develop" {
+  name           = var.vpc_name
+  zone           = var.default_zone
+  network_id     = yandex_vpc_network.develop.id
+  v4_cidr_blocks = var.default_cidr
+}
+
+
+data "yandex_compute_image" "ubuntu" {
+  family = var.vm_web_family
+}
+resource "yandex_compute_instance" "platform" {
+  name        = "netology-${ local.env }-${ local.project }-${ local.role[0] }"
+  platform_id = var.vm_web_platform_id
+  resources {
+    cores         = var.vms_resources.vm_web_resources.cores
+    memory        = var.vms_resources.vm_web_resources.memory
+    core_fraction = var.vms_resources.vm_web_resources.core_fraction
+  }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.image_id
+    }
+  }
+  scheduling_policy {
+    preemptible = var.vm_web_scheduling_policy
+  }
+  network_interface {
+    subnet_id = yandex_vpc_subnet.develop.id
+    nat       = var.vm_web_nat
+  }
+
+  metadata = {
+    serial-port-enable = var.vms_metadata.serial-port-enable
+    ssh-keys           = var.vms_metadata.ssh
+  }
+
+}
+
+resource "yandex_compute_instance" "platform_db" {
+  name        = "netology-${ local.env }-${ local.project }-${ local.role[1] }"
+  platform_id = var.vm_db_platform_id
+  resources {
+    cores         = var.vms_resources.vm_db_resources.cores
+    memory        = var.vms_resources.vm_db_resources.memory
+    core_fraction = var.vms_resources.vm_db_resources.core_fraction
+  }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.image_id
+    }
+  }
+  scheduling_policy {
+    preemptible = var.vm_db_scheduling_policy
+  }
+  network_interface {
+    subnet_id = yandex_vpc_subnet.develop.id
+    nat       = var.vm_db_nat
+  }
+
+  metadata = {
+    serial-port-enable = var.vms_metadata.serial-port-enable
+    ssh-keys           = var.vms_metadata.ssh
+  }
+
+}
+```
+
+</details>
+
+```bash
+PS D:\Lern_netology\net_virt2\src> .\terraform.exe plan
+data.yandex_compute_image.ubuntu: Reading...
+yandex_vpc_network.develop: Refreshing state... [id=enpud16l8rdt1m3abun5]
+data.yandex_compute_image.ubuntu: Read complete after 0s [id=fd85f37uh98ldl1omk30]
+yandex_vpc_subnet.develop: Refreshing state... [id=e9bp11h93i29611orfk9]
+yandex_compute_instance.platform: Refreshing state... [id=fhm8ml08mmofqhnr0dd7]
+yandex_compute_instance.platform_db: Refreshing state... [id=fhm428a7ua68012uqojn]
+
+No changes. Your infrastructure matches the configuration.
+```

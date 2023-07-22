@@ -30,11 +30,3 @@ variable "vpc_name" {
   default     = "develop"
   description = "VPC network & subnet name"
 }
-
-###ssh vars
-
-variable "vms_ssh_root_key" {
-  type        = string
-  default     = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAJkjyC8jM6WyALVI5h/cBOLtxO/OsxSU6Matw+HHefF"
-  description = "ssh-keygen -t ed25519"
-}

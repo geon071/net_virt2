@@ -15,19 +15,6 @@ variable vm_web_platform_id {
   default     = "standard-v1"
 }
 
-variable vm_web_resources {
-  type = object({
-    cores = number
-    memory = number
-    core_fraction = number
-  })
-  default = {
-      cores = 2
-      memory = 2
-      core_fraction = 5
-    }
-}
-
 variable vm_web_scheduling_policy {
   type        = bool
   default     = true
@@ -36,11 +23,6 @@ variable vm_web_scheduling_policy {
 variable vm_web_nat {
   type        = bool
   default     = true
-}
-
-variable vm_web_serial_port_enable {
-  type        = number
-  default     = 1
 }
 
 ### vars for platform-db yandex_compute_instance, yandex_compute_image
@@ -60,19 +42,6 @@ variable vm_db_platform_id {
   default     = "standard-v1"
 }
 
-variable vm_db_resources {
-  type = object({
-    cores = number
-    memory = number
-    core_fraction = number
-  })
-  default = {
-      cores = 2
-      memory = 2
-      core_fraction = 20
-    }
-}
-
 variable vm_db_scheduling_policy {
   type        = bool
   default     = true
@@ -83,7 +52,28 @@ variable vm_db_nat {
   default     = true
 }
 
-variable vm_db_serial_port_enable {
-  type        = number
-  default     = 1
+#### общие ресурсная мапа
+
+variable vms_metadata {
+  type = map
+  default = {
+    serial-port-enable = 1
+    ssh = "ubuntu:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAJkjyC8jM6WyALVI5h/cBOLtxO/OsxSU6Matw+HHefF"
+  }
+}
+
+variable vms_resources {
+  type = map
+  default = {
+        vm_db_resources = {
+            cores = 2
+            memory = 2
+            core_fraction = 20
+        }
+        vm_web_resources = {
+            cores = 2
+            memory = 2
+            core_fraction = 5
+        }
+    }
 }
