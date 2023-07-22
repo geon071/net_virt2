@@ -76,3 +76,103 @@ core_fraction=5, "Уровни производительности vCPU", ми�
 </details>
 
 ### Ответ
+
+#### variables.tf
+
+```JSON
+### vars for yandex_compute_instance, yandex_compute_image
+
+variable vm_web_family {
+  type        = string
+  default     = "ubuntu-2004-lts"
+}
+
+variable vm_web_platform_name {
+  type        = string
+  default     = "netology-develop-platform-web"
+}
+
+variable vm_web_platform_id {
+  type        = string
+  default     = "standard-v1"
+}
+
+variable vm_web_resources {
+  type = object({
+    cores = number
+    memory = number
+    core_fraction = number
+  })
+  default = {
+      cores = 2
+      memory = 2
+      core_fraction = 5
+    }
+}
+
+variable vm_web_scheduling_policy {
+  type        = bool
+  default     = true
+}
+
+variable vm_web_nat {
+  type        = bool
+  default     = true
+}
+
+variable vm_web_serial_port_enable {
+  type        = number
+  default     = 1
+}
+```
+
+#### main.tf (yandex_compute_instance, yandex_compute_image)
+
+```JSON
+data "yandex_compute_image" "ubuntu" {
+  family = var.vm_web_family
+}
+resource "yandex_compute_instance" "platform" {
+  name        = var.vm_web_platform_name
+  platform_id = var.vm_web_platform_id
+  resources {
+    cores         = var.vm_web_resources.cores
+    memory        = var.vm_web_resources.memory
+    core_fraction = var.vm_web_resources.core_fraction
+  }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.image_id
+    }
+  }
+  scheduling_policy {
+    preemptible = var.vm_web_scheduling_policy
+  }
+  network_interface {
+    subnet_id = yandex_vpc_subnet.develop.id
+    nat       = var.vm_web_nat
+  }
+
+  metadata = {
+    serial-port-enable = var.vm_web_serial_port_enable
+    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+  }
+
+}
+```
+
+#### Вывод terraform plan
+
+```bash
+PS D:\Lern_netology\net_virt2\src> .\terraform.exe plan
+yandex_vpc_network.develop: Refreshing state... [id=enpud16l8rdt1m3abun5]
+data.yandex_compute_image.ubuntu: Reading...
+data.yandex_compute_image.ubuntu: Read complete after 1s [id=fd85f37uh98ldl1omk30]
+yandex_vpc_subnet.develop: Refreshing state... [id=e9bp11h93i29611orfk9]
+yandex_compute_instance.platform: Refreshing state... [id=fhm8ml08mmofqhnr0dd7]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration and found no differences, so no changes are needed.
+```
+
