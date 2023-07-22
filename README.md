@@ -389,3 +389,43 @@ yandex_compute_instance.platform_db: Creation complete after 37s [id=fhm428a7ua6
 Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 ```
 
+## Задача 4
+
+<details>
+  <summary>Описание задачи</summary>
+
+1. Объявите в файле outputs.tf output типа map, содержащий { instance_name = external_ip } для каждой из ВМ.
+2. Примените изменения.
+
+В качестве решения приложите вывод значений ip-адресов команды ```terraform output```
+
+</details>
+
+### Ответ
+
+#### outputs.tf
+
+<details>
+  <summary>outputs.tf</summary>
+
+```json
+output "ext_ip" {
+  value       = {
+    (yandex_compute_instance.platform.name)        = yandex_compute_instance.platform.network_interface[0].nat_ip_address
+    (yandex_compute_instance.platform_db.name)  = yandex_compute_instance.platform_db.network_interface[0].nat_ip_address
+  }
+
+}
+```
+
+</details>
+
+#### В качестве решения приложите вывод значений ip-адресов команды ```terraform output```
+
+```bash
+PS D:\Lern_netology\net_virt2\src> .\terraform.exe output
+ext_ip = {
+  "netology-develop-platform-db" = "130.193.48.113"
+  "netology-develop-platform-web" = "158.160.39.39"
+}
+```
