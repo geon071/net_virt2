@@ -80,7 +80,7 @@ core_fraction=5, "Уровни производительности vCPU", ми�
 <details>
   <summary>variables.tf</summary>
 
-```JSON
+```terraform
 ### vars for yandex_compute_instance, yandex_compute_image
 
 variable vm_web_family {
@@ -137,7 +137,7 @@ variable vm_web_ssh {
 <details>
   <summary>main.tf (yandex_compute_instance, yandex_compute_image)</summary>
 
-```JSON
+```terraform
 data "yandex_compute_image" "ubuntu" {
   family = var.vm_web_family
 }
@@ -203,7 +203,7 @@ Terraform has compared your real infrastructure against your configuration and f
 <details>
   <summary>vms_platform.tf</summary>
 
-  ```json
+  ```terraform
 ### vars for platform-web yandex_compute_instance, yandex_compute_image
 
 variable vm_web_family {
@@ -310,7 +310,7 @@ variable vm_db_ssh {
 <details>
   <summary>main.tf</summary>
 
-  ```json
+  ```terraform
 resource "yandex_vpc_network" "develop" {
   name = var.vpc_name
 }
@@ -413,7 +413,7 @@ Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 <details>
   <summary>outputs.tf</summary>
 
-```json
+```terraform
 output "ext_ip" {
   value       = {
     (yandex_compute_instance.platform.name)        = yandex_compute_instance.platform.network_interface[0].nat_ip_address
@@ -451,7 +451,7 @@ ext_ip = {
 <details>
   <summary>locals.tf</summary>
 
-```json
+```terraform
 locals {
   env = "develop"
   project = "platform"
@@ -464,7 +464,7 @@ locals {
 <details>
   <summary>main.tf</summary>
 
-```json
+```terraform
 resource "yandex_compute_instance" "platform" {
   name        = "netology-${ local.env }-${ local.project }-${ local.role[0] }"
   platform_id = var.vm_web_platform_id
@@ -541,7 +541,7 @@ resource "yandex_compute_instance" "platform_db" {
 <details>
   <summary>vms_platform.tf</summary>
 
-```JSON
+```terraform
 #### общие ресурсная мапа
 
 variable vms_metadata {
@@ -573,7 +573,7 @@ variable vms_resources {
 <details>
   <summary>main.tf</summary>
 
-```json
+```terraform
 resource "yandex_vpc_network" "develop" {
   name = var.vpc_name
 }
