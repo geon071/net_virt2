@@ -79,6 +79,9 @@ core_fraction=5, "Уровни производительности vCPU", ми�
 
 #### variables.tf
 
+<details>
+  <summary>variables.tf</summary>
+
 ```JSON
 ### vars for yandex_compute_instance, yandex_compute_image
 
@@ -126,7 +129,12 @@ variable vm_web_serial_port_enable {
 }
 ```
 
+</details>
+
 #### main.tf (yandex_compute_instance, yandex_compute_image)
+
+<details>
+  <summary>main.tf</summary>
 
 ```JSON
 data "yandex_compute_image" "ubuntu" {
@@ -161,6 +169,8 @@ resource "yandex_compute_instance" "platform" {
 }
 ```
 
+</details>
+
 #### Вывод terraform plan
 
 ```bash
@@ -174,5 +184,208 @@ yandex_compute_instance.platform: Refreshing state... [id=fhm8ml08mmofqhnr0dd7]
 No changes. Your infrastructure matches the configuration.
 
 Terraform has compared your real infrastructure against your configuration and found no differences, so no changes are needed.
+```
+
+## Задача 3
+
+<details>
+  <summary>Описание задачи</summary>
+
+1. Создайте в корне проекта файл 'vms_platform.tf' . Перенесите в него все переменные первой ВМ.
+2. Скопируйте блок ресурса и создайте с его помощью вторую ВМ(в файле main.tf): **"netology-develop-platform-db"** ,  cores  = 2, memory = 2, core_fraction = 20. Объявите ее переменные с префиксом **vm_db_** в том же файле('vms_platform.tf').
+3. Примените изменения.
+
+</details>
+
+### Ответ
+
+#### vms_platform.tf
+
+<details>
+  <summary>vms_platform.tf</summary>
+
+  ```json
+### vars for platform-web yandex_compute_instance, yandex_compute_image
+
+variable vm_web_family {
+  type        = string
+  default     = "ubuntu-2004-lts"
+}
+
+variable vm_web_platform_name {
+  type        = string
+  default     = "netology-develop-platform-web"
+}
+
+variable vm_web_platform_id {
+  type        = string
+  default     = "standard-v1"
+}
+
+variable vm_web_resources {
+  type = object({
+    cores = number
+    memory = number
+    core_fraction = number
+  })
+  default = {
+      cores = 2
+      memory = 2
+      core_fraction = 5
+    }
+}
+
+variable vm_web_scheduling_policy {
+  type        = bool
+  default     = true
+}
+
+variable vm_web_nat {
+  type        = bool
+  default     = true
+}
+
+variable vm_web_serial_port_enable {
+  type        = number
+  default     = 1
+}
+
+### vars for platform-db yandex_compute_instance, yandex_compute_image
+
+variable vm_db_family {
+  type        = string
+  default     = "ubuntu-2004-lts"
+}
+
+variable vm_db_platform_name {
+  type        = string
+  default     = "netology-develop-platform-db"
+}
+
+variable vm_db_platform_id {
+  type        = string
+  default     = "standard-v1"
+}
+
+variable vm_db_resources {
+  type = object({
+    cores = number
+    memory = number
+    core_fraction = number
+  })
+  default = {
+      cores = 2
+      memory = 2
+      core_fraction = 20
+    }
+}
+
+variable vm_db_scheduling_policy {
+  type        = bool
+  default     = true
+}
+
+variable vm_db_nat {
+  type        = bool
+  default     = true
+}
+
+variable vm_db_serial_port_enable {
+  type        = number
+  default     = 1
+}
+  ```
+
+</details>
+
+#### main.tf
+
+<details>
+  <summary>main.tf</summary>
+
+  ```json
+resource "yandex_vpc_network" "develop" {
+  name = var.vpc_name
+}
+resource "yandex_vpc_subnet" "develop" {
+  name           = var.vpc_name
+  zone           = var.default_zone
+  network_id     = yandex_vpc_network.develop.id
+  v4_cidr_blocks = var.default_cidr
+}
+
+
+data "yandex_compute_image" "ubuntu" {
+  family = var.vm_web_family
+}
+resource "yandex_compute_instance" "platform" {
+  name        = var.vm_web_platform_name
+  platform_id = var.vm_web_platform_id
+  resources {
+    cores         = var.vm_web_resources.cores
+    memory        = var.vm_web_resources.memory
+    core_fraction = var.vm_web_resources.core_fraction
+  }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.image_id
+    }
+  }
+  scheduling_policy {
+    preemptible = var.vm_web_scheduling_policy
+  }
+  network_interface {
+    subnet_id = yandex_vpc_subnet.develop.id
+    nat       = var.vm_web_nat
+  }
+
+  metadata = {
+    serial-port-enable = var.vm_web_serial_port_enable
+    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+  }
+
+}
+
+resource "yandex_compute_instance" "platform_db" {
+  name        = var.vm_db_platform_name
+  platform_id = var.vm_db_platform_id
+  resources {
+    cores         = var.vm_db_resources.cores
+    memory        = var.vm_db_resources.memory
+    core_fraction = var.vm_db_resources.core_fraction
+  }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.image_id
+    }
+  }
+  scheduling_policy {
+    preemptible = var.vm_db_scheduling_policy
+  }
+  network_interface {
+    subnet_id = yandex_vpc_subnet.develop.id
+    nat       = var.vm_db_nat
+  }
+
+  metadata = {
+    serial-port-enable = var.vm_db_serial_port_enable
+    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+  }
+
+}
+  ```
+
+</details>
+
+#### вывод успешности apply
+
+```bash
+yandex_compute_instance.platform_db: Creating...
+yandex_compute_instance.platform_db: Still creating... [10s elapsed]
+yandex_compute_instance.platform_db: Still creating... [20s elapsed]
+yandex_compute_instance.platform_db: Still creating... [30s elapsed]
+yandex_compute_instance.platform_db: Creation complete after 37s [id=fhm428a7ua68012uqojn]
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 ```
 

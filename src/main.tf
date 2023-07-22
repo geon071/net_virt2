@@ -39,3 +39,31 @@ resource "yandex_compute_instance" "platform" {
   }
 
 }
+
+resource "yandex_compute_instance" "platform_db" {
+  name        = var.vm_db_platform_name
+  platform_id = var.vm_db_platform_id
+  resources {
+    cores         = var.vm_db_resources.cores
+    memory        = var.vm_db_resources.memory
+    core_fraction = var.vm_db_resources.core_fraction
+  }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.image_id
+    }
+  }
+  scheduling_policy {
+    preemptible = var.vm_db_scheduling_policy
+  }
+  network_interface {
+    subnet_id = yandex_vpc_subnet.develop.id
+    nat       = var.vm_db_nat
+  }
+
+  metadata = {
+    serial-port-enable = var.vm_db_serial_port_enable
+    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+  }
+
+}
