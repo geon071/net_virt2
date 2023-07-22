@@ -429,3 +429,94 @@ ext_ip = {
   "netology-develop-platform-web" = "158.160.39.39"
 }
 ```
+
+## Задание 5
+
+<details>
+  <summary>Описание задачи</summary>
+
+1. В файле locals.tf опишите в **одном** local-блоке имя каждой ВМ, используйте интерполяцию ${..} с несколькими переменными по примеру из лекции.
+2. Замените переменные с именами ВМ из файла variables.tf на созданные вами local переменные.
+3. Примените изменения.
+
+</details>
+
+#### locals.tf
+
+<details>
+  <summary>locals.tf</summary>
+
+```json
+locals {
+  env = "develop"
+  project = "platform"
+  role = ["web", "db"]
+}
+```
+
+</details>
+
+#### main.tf
+
+<details>
+  <summary>main.tf</summary>
+
+```json
+resource "yandex_compute_instance" "platform" {
+  name        = "netology-${ local.env }-${ local.project }-${ local.role[0] }"
+  platform_id = var.vm_web_platform_id
+  resources {
+    cores         = var.vm_web_resources.cores
+    memory        = var.vm_web_resources.memory
+    core_fraction = var.vm_web_resources.core_fraction
+  }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.image_id
+    }
+  }
+  scheduling_policy {
+    preemptible = var.vm_web_scheduling_policy
+  }
+  network_interface {
+    subnet_id = yandex_vpc_subnet.develop.id
+    nat       = var.vm_web_nat
+  }
+
+  metadata = {
+    serial-port-enable = var.vm_web_serial_port_enable
+    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+  }
+
+}
+
+resource "yandex_compute_instance" "platform_db" {
+  name        = "netology-${ local.env }-${ local.project }-${ local.role[1] }"
+  platform_id = var.vm_db_platform_id
+  resources {
+    cores         = var.vm_db_resources.cores
+    memory        = var.vm_db_resources.memory
+    core_fraction = var.vm_db_resources.core_fraction
+  }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.image_id
+    }
+  }
+  scheduling_policy {
+    preemptible = var.vm_db_scheduling_policy
+  }
+  network_interface {
+    subnet_id = yandex_vpc_subnet.develop.id
+    nat       = var.vm_db_nat
+  }
+
+  metadata = {
+    serial-port-enable = var.vm_db_serial_port_enable
+    ssh-keys           = "ubuntu:${var.vms_ssh_root_key}"
+  }
+
+}
+```
+
+</details>
